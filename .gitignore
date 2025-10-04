@@ -1,0 +1,35 @@
+# Environnement virtuel
+venv/
+env/
+
+# Dataset (trop lourd pour GitHub)
+data/
+
+# Modèles entraînés (fichiers lourds)
+*.h5
+*.keras
+*.pkl
+
+# Fichiers Python compilés
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Variables d'environnement
+.env
+
+# Logs
+*.log
+
+# Dossiers IDE
+.vscode/
+.idea/
