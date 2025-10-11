@@ -114,7 +114,7 @@ def pretraiter_image(chemin_image):
     width_shift_range=0.1,
     height_shift_range=0.1,
     zoom_range=0.1,
-    horizontal_flip=True
+    horizontal_flip=False # True utile pour des image symetrique par exemple visage d'un humai
 )
 
     train_gen = train_datagen.flow_from_directory(
@@ -137,7 +137,7 @@ def pretraiter_image(chemin_image):
     
     return train_gen,val_gen
 
-train_gen, val_gen = pretraiter_image(TRAIN_DIR)
+#train_gen, val_gen = pretraiter_image(TRAIN_DIR)
 
 ########################################################
 # Quelques verifications sur le data set d'entrainement#
@@ -168,6 +168,8 @@ plt.show()
 # Utilisation optimale du CPU
 tf.config.threading.set_intra_op_parallelism_threads(6)
 tf.config.threading.set_inter_op_parallelism_threads(6)
+# !!! En fait j'utilise du cpu ici car j'ai pas de graphique nvidia (cuda), je suis sur une vieille machine 😊
+
 
 tf.get_logger().setLevel('ERROR')
 print("TensorFlow configuré pour utiliser 6 threads en parallèle.")
@@ -232,7 +234,7 @@ def construire_modele():
 
 # Construire le modèle
 
-model=construire_modele()
+#model=construire_modele()
 
 ### Partie 3 : Entrainement du model
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -249,7 +251,7 @@ def compiler_modele(model):
     print("Fin du compilation")
     return model
 
-model=compiler_modele(model)
+#model=compiler_modele(model)
 
 def entrainer_modele(model,train_gen,val_gen):
     print("\n....Debut de l'entrainement")
@@ -283,13 +285,14 @@ def entrainer_modele(model,train_gen,val_gen):
     return history
 
 
-history = entrainer_modele(model, train_gen, val_gen)
+#history = entrainer_modele(model, train_gen, val_gen)
 
 # Petit graphe pour voir l'evolution de 'accuracy'
 
 import matplotlib.pyplot as plt
 
 # Courbe de l'accuracy 
+"""
 plt.figure(figsize=(6, 4))
 plt.plot(history.history['accuracy'], label='Train Accuracy', color='red')
 plt.plot(history.history['val_accuracy'], label='Validation Accuracy', color='blue')
@@ -312,3 +315,72 @@ plt.legend()
 plt.grid(True)
 plt.savefig("Courbe_loss.png")
 plt.show()
+"""
+
+
+### Partie 4: Test sur des data 
+
+# je vais faire mon premier test sur des données jamais vue par le modele
+
+# a) Petit stats sur les données de test 
+# Chemins vers les données
+TRAIN_DIR = 'data/train'
+TEST_DIR = 'data/test'
+VAL_DIR = 'data/val'
+
+#afficher_stats()
+
+# la sortie 
+""" TEST:
+  - Normal: 234
+  - Pneumonia: 390
+  - Total: 624 """
+
+
+#b) Test 
+from tensorflow.keras.models import load_model
+
+print("\n...Debut des test , je vais charger le dataset et faire les test ")
+model=load_model('meilleur_modele.keras')
+
+test_datagen=ImageDataGenerator(rescale=1./255.0)
+
+test_gen=test_datagen.flow_from_directory(
+    TEST_DIR,
+    target_size=(150,150),   
+    color_mode="grayscale",         
+    batch_size=16,
+    class_mode="binary",
+    shuffle=False   
+)
+# Evaluer le modele
+test_loss, test_accuracy=model.evaluate(test_gen)
+
+print("\n...Resultat sur les premieres du model")
+print(f"\n...Les pertes (loss):{test_loss:.4f}")
+print(f"\n...Les bonnes precision (accuracy):{test_accuracy*100:.2f}")
+
+# Faire des prediction
+
+predictions=model.predict(test_gen)
+
+y_pred=(predictions>0.5).astype(int).flatten()
+
+y_tru=test_gen.classes
+
+print("la taille de y_pred", len(y_pred))
+print("la taille de y_tru", len(y_tru))
+
+# Un peu stats
+
+correct=0
+mauvais=0
+for i in range(0,len(y_pred)):
+    if y_tru[i]==y_pred[i]:
+        correct+=1
+
+print("Les bonnes predictions sur le dataset test (Total: 624) est:", correct)
+
+
+
+
