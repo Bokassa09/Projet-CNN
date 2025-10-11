@@ -340,7 +340,7 @@ VAL_DIR = 'data/val'
 #b) Test 
 from tensorflow.keras.models import load_model
 
-print("\n...Debut des test , je vais charger le dataset et faire les test ")
+print("\n...Debut des test")
 model=load_model('meilleur_modele.keras')
 
 test_datagen=ImageDataGenerator(rescale=1./255.0)
@@ -356,9 +356,9 @@ test_gen=test_datagen.flow_from_directory(
 # Evaluer le modele
 test_loss, test_accuracy=model.evaluate(test_gen)
 
-print("\n...Resultat sur les premieres du model")
-print(f"\n...Les pertes (loss):{test_loss:.4f}")
-print(f"\n...Les bonnes precision (accuracy):{test_accuracy*100:.2f}")
+print("\nResultat sur les premieres test du model")
+print(f"\nLa perte (loss):{test_loss:.4f}")
+print(f"\nLa precision (accuracy):{test_accuracy*100:.2f}")
 
 # Faire des prediction
 
@@ -382,5 +382,16 @@ for i in range(0,len(y_pred)):
 print("Les bonnes predictions sur le dataset test (Total: 624) est:", correct)
 
 
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
+cm = confusion_matrix(y_tru, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal', 'Pneumonia'], yticklabels=['Normal', 'Pneumonia'])
+plt.title("Matrice de confusion")
+plt.xlabel("Prédictions")
+plt.ylabel("Vérités")
+plt.savefig("Matrice_de_conf.png")
+plt.show()
 
+print("\nRapport de classification :")
+print(classification_report(y_tru, y_pred, target_names=['Normal', 'Pneumonia']))
