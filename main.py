@@ -1,3 +1,12 @@
+########################################
+#                                      #
+#  DÉTECTION AUTOMATIQUE DE            #
+#  PNEUMONIE PAR DEEP LEARNING         #
+#                                      #
+########################################
+
+
+
 ### Partie 0 : STATISTIQUES DU DATASET
 import os # Permet de lire les dossiers et fichiers dans CNN
 # Chemins vers les données
@@ -57,7 +66,7 @@ def afficher_exemples():
     images_normal = os.listdir(dossier_normal)
     images_pneumonia = os.listdir(dossier_pneumonia)
     
-    # Prendre seulement les 3 premières
+    
     images_normal = images_normal[:3]
     images_pneumonia= images_pneumonia[:3]
     
@@ -81,15 +90,225 @@ def afficher_exemples():
         # Enlever les axes
         axes[0, i].axis('off')
     
-    # Titre général
+    
     fig.suptitle('Exemples de Radiographies', fontsize=16, fontweight='bold')
     
     # Ajuster l'espacement
     plt.tight_layout()
     
-    # Afficher !
+    
     plt.show()
 
 #afficher_exemples()
 
-### Partie 2: 
+### Partie 2: Prétraitement 
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+def pretraiter_image(chemin_image):
+    train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2,  # 20% pour validation
+    rotation_range=15,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True
+)
+
+    train_gen = train_datagen.flow_from_directory(
+    chemin_image,
+    target_size=(150, 150),
+    color_mode="grayscale",
+    batch_size=16,
+    class_mode="binary",
+    subset="training"
+)
+
+    val_gen = train_datagen.flow_from_directory(
+    chemin_image,
+    target_size=(150, 150),
+    color_mode="grayscale",
+    batch_size=16,
+    class_mode="binary",
+    subset="validation"
+)
+    
+    return train_gen,val_gen
+
+train_gen, val_gen = pretraiter_image(TRAIN_DIR)
+
+########################################################
+# Quelques verifications sur le data set d'entrainement#
+########################################################
+# Récupérer un batch (x_batch, y_batch) genre un lot d'image
+"""
+print("\nQuelques verifications sur le data set d'entrainement")
+x_batch, y_batch = next(train_gen)
+
+print(x_batch.shape)
+print(y_batch.shape)
+
+# Exemple : accéder à la première image du batch
+image_0 = x_batch[0]        # array 150x150x1
+label_0 = y_batch[0]        # 0 ou 1
+
+# Pour afficher
+import matplotlib.pyplot as plt
+plt.imshow(image_0.squeeze(), cmap='gray')  # squeeze pour enlever la dim 1
+plt.title(f"Label: {label_0}")
+plt.show()
+"""
+
+
+### Partie 2: Construire le modèle CNN
+
+
+# Utilisation optimale du CPU
+tf.config.threading.set_intra_op_parallelism_threads(6)
+tf.config.threading.set_inter_op_parallelism_threads(6)
+
+tf.get_logger().setLevel('ERROR')
+print("TensorFlow configuré pour utiliser 6 threads en parallèle.")
+
+
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
+
+##################################################
+#    Input (150x150x1)
+#        ↓
+#    [Conv2D(32) + MaxPooling + Dropout + Padding]  ← Bloc 1
+#        ↓
+#    [Conv2D(64) + MaxPooling + Dropout]  ← Bloc 2
+#        ↓
+#    [Conv2D(128) + MaxPooling ] ← Bloc 3
+#        ↓
+#    [Flatten]
+#        ↓
+#    [Dense(50) + ReLU + Dropout]
+#        ↓
+#    [Dense(1) + Sigmoid] ← Sortie : 0 ou 1
+##################################################
+
+def construire_modele():
+    """Construit l'architecture du CNN"""
+    print("\nConstruction du modèle CNN...")
+    
+    # Créer un modèle séquentiel 
+    model=Sequential()
+    
+    # Entrée
+    model.add(layers.Input(shape=(150, 150, 1)))
+     
+    # Bloc 1
+    model.add(layers.Conv2D(32,(3, 3),activation='relu',padding='same')) # Ajout de padding pour ne pas perdre trop d’informations spatiales
+    model.add(layers.MaxPooling2D((2, 2)))  # Réduit la taille de moitié
+    model.add(layers.Dropout(0.25))  # Dropout de 25%
+    # Bloc 2
+    model.add(layers.Conv2D(64,(3, 3),activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))  
+    model.add(layers.Dropout(0.25))  
+    # Bloc 3
+    model.add(layers.Conv2D(128,(3, 3),activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))  
+    model.add(layers.Dropout(0.20))  
+   
+    # FLATTEN : Transformer en vecteur 1D 
+    model.add(layers.Flatten())
+    
+    # DENSE : Classification
+    model.add(layers.Dense(50, activation='relu'))
+    model.add(layers.Dropout(0.5))
+
+    # OUTPUT : 1 neurone avec Sigmoid
+    model.add(layers.Dense(1, activation='sigmoid'))
+    # Afficher l'architecture
+    print("\nArchitecture du modèle :")
+    model.summary()
+    
+    return model
+
+# Construire le modèle
+
+model=construire_modele()
+
+### Partie 3 : Entrainement du model
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.optimizers import Adam
+
+def compiler_modele(model):
+    print("\nCompilation du modele")
+    model.compile(
+        optimizer=Adam(learning_rate=0.001),
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+
+    )
+    print("Fin du compilation")
+    return model
+
+model=compiler_modele(model)
+
+def entrainer_modele(model,train_gen,val_gen):
+    print("\n....Debut de l'entrainement")
+
+    checkpoint = ModelCheckpoint(
+    'meilleur_modele.keras',
+    monitor='val_accuracy',
+    save_best_only=True,
+    mode='max',
+    verbose=1
+)
+
+    early_stop = EarlyStopping(
+    monitor='val_loss',
+    patience=5,
+    restore_best_weights=True,
+    verbose=1
+)
+
+
+    history = model.fit(
+    train_gen,
+    validation_data=val_gen,
+    epochs=30,
+    callbacks=[checkpoint, early_stop],
+    verbose=1
+)
+    
+    print("\n....Fin de l'entrainement")
+
+    return history
+
+
+history = entrainer_modele(model, train_gen, val_gen)
+
+# Petit graphe pour voir l'evolution de 'accuracy'
+
+import matplotlib.pyplot as plt
+
+# Courbe de l'accuracy 
+plt.figure(figsize=(6, 4))
+plt.plot(history.history['accuracy'], label='Train Accuracy', color='red')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy', color='blue')
+plt.title("Évolution de l'Accuracy")
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.grid(True)
+plt.savefig("Courbe_accuracy.png")
+plt.show()
+
+# Courbe de la loss
+plt.figure(figsize=(6, 4))
+plt.plot(history.history['loss'], label='Train Loss', color='red')
+plt.plot(history.history['val_loss'], label='Validation Loss', color='green')
+plt.title("Évolution de la Loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+plt.grid(True)
+plt.savefig("Courbe_loss.png")
+plt.show()
