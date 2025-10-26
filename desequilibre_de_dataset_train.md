@@ -1,0 +1,66 @@
+
+1️⃣ Contexte
+
+Le dataset présente un déséquilibre marqué :
+
+Normal : 1341 images (≈26 %)
+
+Pneumonia : 3875 images (≈74 %)
+
+Le modèle CNN entraîné initialement montrait un fort biais vers Pneumonia, avec un recall faible pour Normal (0.46), ce qui est problématique dans un contexte médical.
+
+2️⃣ Méthode appliquée
+
+Pour corriger le déséquilibre, j'ai utilisé :
+
+class_weight : pondération de la loss par classe.
+
+Normal=1.945,Pneumonia=0.673
+
+
+Architecture CNN inchangée.
+
+L’objectif : améliorer la reconnaissance de la classe minoritaire (Normal) sans détériorer la performance de Pneumonia.
+
+3️⃣ Résultats apres ajout de class_weight
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.93      0.71      0.80       234
+   Pneumonia       0.85      0.97      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.89      0.84      0.85       624
+weighted avg       0.88      0.87      0.87       624
+
+# Avant j'ai cette sortie 
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.96      0.46      0.62       234
+   Pneumonia       0.75      0.99      0.85       390
+
+    accuracy                           0.79       624
+   macro avg       0.85      0.72      0.74       624
+weighted avg       0.83      0.79      0.77       624
+
+Observations clés :
+
+Recall Normal est passé de 0.46 → 0.71, ce qui montre que le modèle identifie beaucoup mieux les patients sains.
+
+Performance de Pneumonia stable : le modèle continue de détecter correctement la classe majoritaire.
+
+Accuracy globale améliorée (0.79 → 0.87).
+
+4️⃣ Conclusion
+
+L’utilisation de class_weight a permis de :
+
+Corriger le biais du modèle envers la classe majoritaire.
+
+Améliorer significativement la reconnaissance de la classe minoritaire (Normal), ce qui est crucial en milieu médical.
+
+Maintenir une performance élevée sur Pneumonia, assurant un équilibre entre précision et rappel.
+
+Le modèle est désormais plus fiable pour un usage clinique, minimisant les faux négatifs pour les patients sains tout en conservant une forte détection des Pneumonia.

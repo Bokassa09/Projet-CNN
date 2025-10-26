@@ -256,6 +256,9 @@ def compiler_modele(model):
 def entrainer_modele(model,train_gen,val_gen):
     print("\n....Debut de l'entrainement")
 
+    class_weight={0:1.945,1:0.673}
+    # On ajoute ici class_weight pour resoudre le probleme de la desequilibre du dataset trainning
+
     checkpoint = ModelCheckpoint(
     'meilleur_modele.keras',
     monitor='val_accuracy',
@@ -277,7 +280,8 @@ def entrainer_modele(model,train_gen,val_gen):
     validation_data=val_gen,
     epochs=30,
     callbacks=[checkpoint, early_stop],
-    verbose=1
+    verbose=1,
+    class_weight=class_weight
 )
     
     print("\n....Fin de l'entrainement")
@@ -303,8 +307,9 @@ plt.legend()
 plt.grid(True)
 plt.savefig("Courbe_accuracy.png")
 plt.show()
-
+"""
 # Courbe de la loss
+"""
 plt.figure(figsize=(6, 4))
 plt.plot(history.history['loss'], label='Train Loss', color='red')
 plt.plot(history.history['val_loss'], label='Validation Loss', color='green')
@@ -338,6 +343,7 @@ VAL_DIR = 'data/val'
 
 
 #b) Test 
+
 from tensorflow.keras.models import load_model
 
 print("\n...Debut des test")
@@ -353,12 +359,15 @@ test_gen=test_datagen.flow_from_directory(
     class_mode="binary",
     shuffle=False   
 )
+
 # Evaluer le modele
+
 test_loss, test_accuracy=model.evaluate(test_gen)
 
 print("\nResultat sur les premieres test du model")
 print(f"\nLa perte (loss):{test_loss:.4f}")
 print(f"\nLa precision (accuracy):{test_accuracy*100:.2f}")
+
 
 # Faire des prediction
 
@@ -370,6 +379,7 @@ y_tru=test_gen.classes
 
 print("la taille de y_pred", len(y_pred))
 print("la taille de y_tru", len(y_tru))
+
 
 # Un peu stats
 
