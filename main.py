@@ -114,14 +114,14 @@ def pretraiter_image(chemin_image):
     width_shift_range=0.1,
     height_shift_range=0.1,
     zoom_range=0.1,
-    horizontal_flip=False # True utile pour des image symetrique par exemple visage d'un humai
+    horizontal_flip=False # True utile pour des image symetrique par exemple visage d'un humain
 )
 
     train_gen = train_datagen.flow_from_directory(
     chemin_image,
     target_size=(150, 150),
     color_mode="grayscale",
-    batch_size=16,
+    batch_size=100,
     class_mode="binary",
     subset="training"
 )
@@ -130,14 +130,14 @@ def pretraiter_image(chemin_image):
     chemin_image,
     target_size=(150, 150),
     color_mode="grayscale",
-    batch_size=16,
+    batch_size=32,
     class_mode="binary",
     subset="validation"
 )
     
     return train_gen,val_gen
 
-#train_gen, val_gen = pretraiter_image(TRAIN_DIR)
+train_gen, val_gen = pretraiter_image(TRAIN_DIR)
 
 ########################################################
 # Quelques verifications sur le data set d'entrainement#
@@ -205,11 +205,11 @@ def construire_modele():
     model.add(layers.Input(shape=(150, 150, 1)))
      
     # Bloc 1
-    model.add(layers.Conv2D(32,(3, 3),activation='relu',padding='same')) # Ajout de padding pour ne pas perdre trop d’informations spatiales
+    model.add(layers.Conv2D(32,(3, 3),activation='relu', padding='same'))  # Ajout de padding pour ne pas perdre trop d’informations spatiales
     model.add(layers.MaxPooling2D((2, 2)))  # Réduit la taille de moitié
     model.add(layers.Dropout(0.25))  # Dropout de 25%
     # Bloc 2
-    model.add(layers.Conv2D(64,(3, 3),activation='relu'))
+    model.add(layers.Conv2D(64,(3, 3),activation='relu')) 
     model.add(layers.MaxPooling2D((2, 2)))  
     model.add(layers.Dropout(0.25))  
     # Bloc 3
@@ -221,8 +221,9 @@ def construire_modele():
     model.add(layers.Flatten())
     
     # DENSE : Classification
-    model.add(layers.Dense(50, activation='relu'))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(100, activation='relu'))
+    #model.add(layers.Dropout(0.5))
+    #model.add(layers.Dense(20, activation='relu'))
 
     # OUTPUT : 1 neurone avec Sigmoid
     model.add(layers.Dense(1, activation='sigmoid'))
@@ -234,10 +235,10 @@ def construire_modele():
 
 # Construire le modèle
 
-#model=construire_modele()
+model=construire_modele()
 
 ### Partie 3 : Entrainement du model
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam
 
 def compiler_modele(model):
@@ -251,16 +252,23 @@ def compiler_modele(model):
     print("Fin du compilation")
     return model
 
-#model=compiler_modele(model)
+model=compiler_modele(model)
 
 def entrainer_modele(model,train_gen,val_gen):
     print("\n....Debut de l'entrainement")
 
-    class_weight={0:1.945,1:0.673}
+    class_weight={0:2,1:0.673}
     # On ajoute ici class_weight pour resoudre le probleme de la desequilibre du dataset trainning
 
+    #lr_adapter= ReduceLROnPlateau(
+    #monitor='val_loss',
+    #patience=2,
+    #verbose=1,
+    #factor=0.3,
+    #min_lr=1e-6)
+
     checkpoint = ModelCheckpoint(
-    'meilleur_modele.keras',
+    'meilleur_modele_test.keras',
     monitor='val_accuracy',
     save_best_only=True,
     mode='max',
@@ -279,7 +287,7 @@ def entrainer_modele(model,train_gen,val_gen):
     train_gen,
     validation_data=val_gen,
     epochs=30,
-    callbacks=[checkpoint, early_stop],
+    callbacks=[checkpoint, early_stop], #lr_adapter
     verbose=1,
     class_weight=class_weight
 )
@@ -289,7 +297,7 @@ def entrainer_modele(model,train_gen,val_gen):
     return history
 
 
-#history = entrainer_modele(model, train_gen, val_gen)
+history = entrainer_modele(model, train_gen, val_gen)
 
 # Petit graphe pour voir l'evolution de 'accuracy'
 
@@ -347,7 +355,7 @@ VAL_DIR = 'data/val'
 from tensorflow.keras.models import load_model
 
 print("\n...Debut des test")
-model=load_model('meilleur_modele.keras')
+model=load_model('meilleur_modele_test.keras')
 
 test_datagen=ImageDataGenerator(rescale=1./255.0)
 
@@ -400,7 +408,7 @@ sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal', 'Pneum
 plt.title("Matrice de confusion")
 plt.xlabel("Prédictions")
 plt.ylabel("Vérités")
-plt.savefig("Matrice_de_conf.png")
+plt.savefig("Matrice_de_conf1.png")
 plt.show()
 
 print("\nRapport de classification :")

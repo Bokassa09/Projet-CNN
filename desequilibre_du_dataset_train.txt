@@ -34,7 +34,8 @@ Rapport de classification :
    macro avg       0.89      0.84      0.85       624
 weighted avg       0.88      0.87      0.87       624
 
-# Avant j'ai cette sortie 
+Avant j'ai cette sortie 
+
 Rapport de classification :
               precision    recall  f1-score   support
 

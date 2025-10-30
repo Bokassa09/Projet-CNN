@@ -1,0 +1,431 @@
+1) Dataset d'entrainement
+Eviter d'avoir un dataset déséquilibre, car sa influence beaucoup les predictions du modele 
+Pour eviter la déséquilibre du dataset j'ai mis class_weight
+Pour plus détail sur cette approche consulter le fichier desequilibre_du_dataset_train.txt
+
+2) Parametrage de batch size dans train_gen
+*Avant le batch size est à 16 avec une telle sortie:
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.93      0.71      0.80       234
+   Pneumonia       0.85      0.97      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.89      0.84      0.85       624
+weighted avg       0.88      0.87      0.87       624
+
+*La je viens de passer le batch size à 32 pour voir les effets
+voici la sortie sur le dataset test :
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.95      0.66      0.78       234
+   Pneumonia       0.83      0.98      0.90       390
+
+    accuracy                           0.86       624
+   macro avg       0.89      0.82      0.84       624
+weighted avg       0.87      0.86      0.85       624
+
+*La je viens de passer le batch size à 48 pour voir les effets
+voici la sortie sur le dataset test :
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.92      0.71      0.80       234
+   Pneumonia       0.85      0.96      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.88      0.84      0.85       624
+weighted avg       0.88      0.87      0.86       624
+
+*La je viens de passer le batch size à 64 pour voir les effets
+voici la sortie sur le dataset test :
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.93      0.66      0.78       234
+   Pneumonia       0.83      0.97      0.89       390
+
+    accuracy                           0.86       624
+   macro avg       0.88      0.82      0.83       624
+weighted avg       0.87      0.86      0.85       624
+
+*La je viens de passer le batch size à 100 pour voir les effets
+voici la sortie sur le dataset test :
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.92      0.76      0.83       234
+   Pneumonia       0.87      0.96      0.91       390
+
+    accuracy                           0.89       624
+   macro avg       0.89      0.86      0.87       624
+weighted avg       0.89      0.89      0.88       624
+
+Conclusion : Batch Size 100 
+
+Dataset déséquilibré : class_weight={0:1.945, 1:0.673}
+
+Avec un grand batch, le modèle voit plus d'exemples variés à chaque mise à jour
+Les class_weights sont mieux moyennés sur un grand batch
+Cela stabilise l'apprentissage pour la classe minoritaire (Normal)
+
+
+Gradient plus stable :
+
+Grand batch = gradient plus représentatif de tout le dataset
+Moins de sur-ajustement à la classe majoritaire (Pneumonia)
+
+4) Retour la class_weight
+J'ai decidé d'augmenter un peu legerement le poid de la classe Normal avant s'etait 
+class_weight={0:1.945,1:0.673} maintenant je vais passer à class_weight={0:2,1:0.673}
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.89      0.79      0.84       234
+   Pneumonia       0.88      0.94      0.91       390
+
+    accuracy                           0.89       624
+   macro avg       0.89      0.87      0.88       624
+weighted avg       0.89      0.89      0.89       624
+
+En augmentant le poids de la classe Normal de 1.945 → 2.0, j'ai :
+
+Donné un peu plus d'importance aux erreurs sur les cas normaux
+Forcé le modèle à ne pas être trop "paranoïaque" (tout classifier comme pneumonie)
+
+5) Parametrage du learning_rate
+Tout le modele est entrainé et testé jusqu'à présent avce learning_rate=0.001
+Donc j'ai decidé de prendre des learning_rate un peu plus petit que 0.001 et un peu plus superieur à
+0.001 pour voir leurs effets ou influence sur les precisions du modele
+
+
+Au depart learning_rate=0.001
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.89      0.79      0.84       234
+   Pneumonia       0.88      0.94      0.91       390
+
+    accuracy                           0.89       624
+   macro avg       0.89      0.87      0.88       624
+weighted avg       0.89      0.89      0.89       624
+
+*Inferieur
+a) learning_rate=0.0002
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.70      0.74      0.72       234
+   Pneumonia       0.84      0.81      0.82       390
+
+    accuracy                           0.78       624
+   macro avg       0.77      0.77      0.77       624
+weighted avg       0.79      0.78      0.78       624
+
+b) learning_rate=0.0001
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.75      0.64      0.69       234
+   Pneumonia       0.80      0.87      0.84       390
+
+    accuracy                           0.79       624
+   macro avg       0.78      0.76      0.76       624
+weighted avg       0.78      0.79      0.78       624
+
+*Superieur
+c) learning_rate=0.002
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.95      0.68      0.79       234
+   Pneumonia       0.83      0.98      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.89      0.83      0.85       624
+weighted avg       0.88      0.87      0.86       624
+
+d) learning_rate=0.004
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.84      0.81      0.82       234
+   Pneumonia       0.89      0.91      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.86      0.86      0.86       624
+weighted avg       0.87      0.87      0.87       624
+
+* Par curositer j'ai decidé de tester 0.01 comme learning_rate
+Et bimmm! voici la sortie 
+precision    recall  f1-score   support
+
+      Normal       0.38      1.00      0.55       234
+   Pneumonia       0.00      0.00      0.00       390
+
+    accuracy                           0.38       624
+   macro avg       0.19      0.50      0.27       624
+weighted avg       0.14      0.38      0.20       624
+
+une sortie tres mauvaise cela confirme la theorie de ne 
+pas prendre un learning_rate trop grand 
+
+6) Achitecture du reseaux
+Jusqu'à present j'ai un reseaux sous cette forme:
+
+    Input (150x150x1)
+        ↓
+    [Conv2D(32) + MaxPooling + Dropout(0.25) + Padding]  ← Bloc 1
+       ↓
+    [Conv2D(64) + MaxPooling + Dropout(0.25)]  ← Bloc 2
+       ↓
+    [Conv2D(128) + MaxPooling + Dropout(0.20)] ← Bloc 3
+        ↓
+    [Flatten]
+       ↓
+    [Dense(50) + ReLU + Dropout]
+        ↓
+    [Dense(1) + Sigmoid] ← Sortie : 0 ou 1
+
+Préserver les informations initiales
+   - Au début, l'image 150x150 contient des détails importants sur les bords
+   - Les radios pulmonaires ont souvent des structures importantes en périphérie
+   - Le padding='same' évite de perdre ces informations dès le début
+
+# Padding
+
+a) Approche 1
+L'importance du Padding 
+Pour cela j'ai enlevé le Padding dans le bloc 1 ( padding='valid')
+Regardons la sortie:
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.95      0.63      0.76       234
+   Pneumonia       0.81      0.98      0.89       390
+
+    accuracy                           0.85       624
+   macro avg       0.88      0.81      0.82       624
+weighted avg       0.87      0.85      0.84       624
+
+Analyse des résultats
+
+Sans padding, le modèle atteint une accuracy de 0.85, ce qui reste satisfaisant. Cependant,
+ on remarque une baisse du F1-score pour la classe Normal (0.76), traduisant une moins bonne capacité du modèle à identifier correctement les images normales.
+ Cela suggère que le modèle a tendance à privilégier la classe Pneumonia, 
+ probablement à cause d’une perte d’informations situées sur les bords des images.
+
+En effet, sans padding, certaines caractéristiques discriminantes présentes 
+aux extrémités des images peuvent être perdues lors des 
+convolutions successives. Cette perte d’information nuit particulièrement 
+à la détection des images normales, qui semblent contenir des indices pertinents 
+dans ces zones périphériques.
+
+b) Approche 2
+On remet le padding partout sur les 3 bloc 
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.92      0.72      0.81       234
+   Pneumonia       0.85      0.96      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.88      0.84      0.85       624
+weighted avg       0.88      0.87      0.87       624
+
+Bon le mieux est de garder le padding suelemnt sur le bloc 1 , ça presence 
+apporte 2 choses, l'accuracy est meilleur autour de 0.87 à 0.89 et le f1-score de
+Normal est audela de 0.80 ce qui est tres bien 
+La presence du padding augmente la puissance de calcul car le nombre de parametre 
+a augmentanté , donc le mieux est de garder un seul padding et le mieux est de le 
+garder sur le bloc 1
+
+# Couche dense ( classification )
+ a) Approche 1
+ 
+ Dans cette approche, la couche dense comporte 50 neurones entièrement connectés, 
+ produisant une sortie transmise à la couche de sortie composée d’un seul neurone 
+ (pour la classification binaire).
+Avant la sortie, un Dropout de 50 % est appliqué : cela signifie que 
+la moitié des neurones est désactivée aléatoirement à chaque itération 
+d’apprentissage afin de réduire le surapprentissage (overfitting).
+
+Cependant, un taux de dropout de 50 % peut s’avérer trop élevé, entraînant une perte 
+d’informations utile et une convergence plus lente.
+Pour améliorer les performances, j’ai donc décidé de doubler le nombre de neurones 
+(de 50 à 100) afin d’augmenter la capacité d’apprentissage du modèle, et de supprimer 
+le Dropout afin de conserver l’intégralité de l’information transmise par la couche dense.
+ 
+Pour le moment, il est difficile d’affirmer si ce choix est optimal — seule l’évaluation des performances du modèle peut le confirmer.
+Voici le rapport de classification obtenu :
+
+              precision    recall  f1-score   support
+
+      Normal       0.93      0.82      0.87       234
+   Pneumonia       0.90      0.96      0.93       390
+
+    accuracy                           0.91       624
+   macro avg       0.91      0.89      0.90       624
+weighted avg       0.91      0.91      0.91       624
+
+Les résultats sont très satisfaisants :
+
+L’accuracy est passée de 0.87 à 0.91,
+
+Le recall pour la classe Normal dépasse enfin 0.80, ce qui n’était jamais arrivé lors 
+des précédents entraînements.
+
+Cette amélioration est particulièrement importante, car le modèle était initialement confronté
+à un déséquilibre du jeu de données d’entraînement, rendant difficile la détection correcte 
+des images Normal.
+L’augmentation du nombre de neurones et la suppression du dropout semblent donc avoir 
+renforcé la capacité du modèle à mieux généraliser, notamment sur la classe minoritaire.
+
+b) Approche 2
+
+Ajouter une couche supplementaire dans la classification comme ça 
+l'idee c'est voir comment ça va influencer les predictions du modele
+model.add(layers.Dense(20, activation='relu'))
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.82      0.84      0.83       234
+   Pneumonia       0.90      0.89      0.89       390
+
+    accuracy                           0.87       624
+   macro avg       0.86      0.86      0.86       624
+weighted avg       0.87      0.87      0.87       624
+
+Les résultats montrent qu’aucune amélioration significative 
+n’a été obtenue par rapport à l’approche précédente.
+Au contraire, l’accuracy a légèrement diminué (de 0.91 à 0.87), 
+et le F1-score global est également plus faible.
+
+De plus, l’ajout de cette couche a ralenti l’entraînement du modèle, car il augmente
+le nombre de paramètres à apprendre sans apporter de gain de performance notable.
+
+Ainsi, on peut conclure que dans ce cas précis, l’ajout d’une couche dense 
+supplémentaire ne profite pas au modèle et tend à complexifier inutilement l’apprentissage.
+
+c) Approche 3
+
+Dans cette approche, j’ai modifié deux éléments du modèle afin d’évaluer leur
+influence respective sur les performances :
+
+Le nombre de filtres convolutionnels a été augmenté de 32 à 64 dans le bloc 
+d’extraction de caractéristiques.
+
+Le nombre de neurones dans la couche dense a été réduit de 100 à 50
+ (valeur initiale utilisée dans les premières approches).
+
+L’idée ici est de changer de stratégie d’optimisation :
+au lieu d’augmenter la capacité du modèle uniquement dans la partie classification (en ajoutant des neurones),
+j’ai voulu observer si renforcer la partie convolutionnelle, c’est-à-dire la phase d’extraction de caractéristiques,
+pouvait améliorer les performances globales.
+
+Voici la sortie:
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.96      0.65      0.77       234
+   Pneumonia       0.82      0.98      0.89       390
+
+    accuracy                           0.86       624
+   macro avg       0.89      0.81      0.83       624
+weighted avg       0.87      0.86      0.85       624
+
+L’augmentation du nombre de neurones dans la couche dense améliore nettement
+l’accuracy (0.91 vs 0.86) et le F1-score de la classe Normal (0.87 vs 0.77).
+
+L’augmentation du nombre de filtres dans un seul bloc convolutionnel n’apporte pas 
+d’amélioration significative et conduit même à une baisse de performance sur la classe Normal, 
+malgré une légère augmentation de sa précision.
+
+On peut en conclure que renforcer la partie dense du réseau de classification est plus efficace
+pour ce problème que d’augmenter uniquement les filtres d’un bloc convolutionnel.
+
+Cette analyse montre que, pour ce modèle et ce dataset, l’optimisation de la capacité du
+réseau dense est prioritaire pour améliorer la classification globale.
+
+d) Approche 4
+Dans le bloc 1 du réseau, j’ai ajouté deux couches convolutionnelles consécutives avec 32 filtres chacune et des noyaux de taille 
+3×3 :
+    model.add(layers.Conv2D(32,(3, 3),activation='relu', padding='same')) 
+    model.add(layers.Conv2D(32,(3, 3),activation='relu', padding='same'))
+Le but de cette configuration est de capturer plus efficacement les caractéristiques (features) des images dès les premières couches.
+
+La première convolution détecte des motifs simples (bords, textures locales),
+
+La deuxième couche affine et combine ces motifs pour créer des représentations plus riches et discriminantes.
+
+L’utilisation de padding = 'same' permet de préserver la taille des images tout en conservant les informations sur 
+les bords, ce qui est particulièrement important pour la classe Normal, où certaines caractéristiques discriminantes
+ se trouvent sur les extrémités.
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.92      0.67      0.77       234
+   Pneumonia       0.83      0.97      0.89       390
+
+    accuracy                           0.85       624
+   macro avg       0.88      0.82      0.83       624
+weighted avg       0.86      0.85      0.85       624
+
+
+e) Approche 5
+Garder le mdoele tel que avec accuracy 0.91 et ajouter une 
+adapation automtique de learning_rate et class_weight
+Les bonnes predictions sur le dataset test (Total: 624) est: 542
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+      Normal       0.87      0.77      0.81       234
+   Pneumonia       0.87      0.93      0.90       390
+
+    accuracy                           0.87       624
+   macro avg       0.87      0.85      0.86       624
+weighted avg       0.87      0.87      0.87       624
+
+
+L’adaptation automatique du learning rate n’apporte pas toujours une grande amélioration. Certes, c’est une bonne pratique dans certains cas, mais parfois il est préférable de conserver un learning rate fixe pendant tout l’entraînement du modèle.
+
+D’autres idées, comme augmenter la taille du batch size, utiliser des images de taille 255×255, ou encore ajuster le nombre de filtres, auraient pu être testées. Cependant, ces approches sont limitées par les ressources disponibles (puissance de calcul et stockage), et je n’ai pas pu les expérimenter dans ce projet.
+
+
+
+Conclusion
+
+Dans cette partie, je présente les approches et les modifications qui m’ont permis d’améliorer les performances de mon modèle.
+
+Dans ce projet, j’ai entraîné un réseau de neurones convolutif (CNN) avec pour objectif d’obtenir un modèle moins gourmand en ressources — notamment en puissance de calcul et en mémoire (RAM).
+Grâce à plusieurs optimisations détaillées dans ce document, j’ai réussi à améliorer la précision (accuracy) du modèle, passant de 78% à environ 89 %....91 %.
+
+Les quatre éléments qui ont eu le plus d’impact sur cette amélioration, et qu’il serait pertinent de conserver pour les futurs projets, sont :
+
+1. Le choix approprié du learning rate ;
+
+2. L’ajustement de la taille du batch size ;
+
+3. L’utilisation des class weights ;
+
+4. Le nombre de neurones dans la dernière couche de classification (couche entièrement connectée).
+
+Dans ce projet, certains participants ont utilisé des modèles contenant jusqu’à 14 millions de
+paramètres pour atteindre une telle performance, d’autres environ 1,5 million, et moi 3,7 millions.
+D’autres encore ont atteint une très haute précision avec 28 millions de paramètres.
+
+Ce projet, hébergé sur Kaggle, a surtout été pour moi une occasion d’apprendre l’ingénierie de l’entraînement
+d’un modèle : comprendre comment chaque choix influence les performances est la clé pour progresser dans ce domaine.
