@@ -33,3 +33,8 @@ desktop.ini
 # Dossiers IDE
 .vscode/
 .idea/
+
+# Les 2 modeles
+
+meilleur_modele.keras
+meilleur_modele_test.keras
